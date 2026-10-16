@@ -1,0 +1,9 @@
+package com.anggaarifandi.holidays.api;
+
+public class InvalidRequestException extends RuntimeException {
+
+	public InvalidRequestException(String message) {
+		super(message);
+	}
+
+}

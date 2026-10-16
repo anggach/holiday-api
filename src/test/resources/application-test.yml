@@ -1,0 +1,38 @@
+app:
+  api-key: test-api-key
+  rate-limit:
+    capacity: 1000
+    refill-tokens: 1000
+    refill-duration: 1m
+  nager:
+    base-url: http://localhost:9
+    connect-timeout: 1s
+    read-timeout: 1s
+    max-attempts: 1
+  ai:
+    required: false
+    expected-model: llama3.1
+    health-timeout: 1s
+    warmup: false
+  error:
+    include-detail: true
+
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:9
+      chat:
+        options:
+          model: llama3.1
+          temperature: 0.1
+          num-ctx: 4096
+          num-predict: 384
+          keep-alive: 30m
+  main:
+    allow-bean-definition-overriding: true
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always

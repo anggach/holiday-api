@@ -1,0 +1,83 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: holidays-api
+  cache:
+    type: caffeine
+  ai:
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:llama3.1}
+          temperature: 0.1
+          # llama3.1 defaults to a 128k context. This chat fits in 4k, and a
+          # smaller window avoids a large KV cache on every load.
+          num-ctx: ${OLLAMA_NUM_CTX:4096}
+          # Caps the reply so the second tool-calling pass cannot ramble.
+          num-predict: ${OLLAMA_NUM_PREDICT:384}
+          keep-alive: ${OLLAMA_KEEP_ALIVE:30m}
+    chat:
+      client:
+        enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  tracing:
+    # Off unless Tempo is reachable. Docker Compose turns this on.
+    enabled: ${TRACING_ENABLED:false}
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true
+        gen_ai.client.operation: true
+        spring.ai.chat.client: true
+        spring.ai.tool: true
+
+app:
+  api-key: ${APP_API_KEY:dev-api-key}
+  error:
+    include-detail: ${APP_ERROR_INCLUDE_DETAIL:false}
+    problem-type-base: ${APP_PROBLEM_TYPE_BASE:https://api.holidays.local/problems}
+  cache:
+    maximum-size: ${APP_CACHE_MAXIMUM_SIZE:500}
+    expire-after-write: ${APP_CACHE_EXPIRE_AFTER_WRITE:24h}
+  rate-limit:
+    capacity: 60
+    refill-tokens: 60
+    refill-duration: 1m
+  nager:
+    base-url: ${NAGER_BASE_URL:https://date.nager.at/api/v3}
+    connect-timeout: 2s
+    read-timeout: 5s
+    max-attempts: 3
+  ai:
+    required: false
+    expected-model: ${OLLAMA_MODEL:llama3.1}
+    health-timeout: 2s
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    # Load the model in the background after startup so the first chat skips cold start.
+    warmup: ${OLLAMA_WARMUP:true}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{requestId:-}]"
